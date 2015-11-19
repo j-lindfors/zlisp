@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include "mpc.h"
 
 /* If compiling on Windows, compile these functions */
 #ifdef _WIN32
@@ -27,6 +28,12 @@ void add_history(char* unused) {}
 #endif
 
 int main(int argc, char** argv) {
+
+    /* Create some parsers */
+    mpc_parser_t* Number    = mpc_new("number");
+    mpc_parser_t* Operator  = mpc_new("operator");
+    mpc_parser_t* Expr      = mpc_new("expr");
+    mpc_parser_t* Zlisp     = mpc_new("zlisp");
     
     puts("zLisp version 0.0.0.1");
     puts("Press Ctrl+c to Exit\n");

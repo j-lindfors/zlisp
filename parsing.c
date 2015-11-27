@@ -31,7 +31,7 @@ typedef struct lenv lenv;
 
 /* Lisp Value */
 
-enum { LVAL_ERR, LVAL_NUM,   LVAL_SYM, 
+enum { LVAL_ERR, LVAL_NUM,   LVAL_SYM, LVAL_STR,
        LVAL_FUN, LVAL_SEXPR, LVAL_QEXPR };
 
 typedef lval*(*lbuiltin)(lenv*, lval*);
@@ -43,6 +43,7 @@ struct lval {
   long num;
   char* err;
   char* sym;
+  char* str;
 
   /* Function */
   lbuiltin builtin;
@@ -91,6 +92,14 @@ lval* lval_sym(char* s) {
   v->sym = malloc(strlen(s) + 1);
   strcpy(v->sym, s);
   return v;
+}
+
+lval* lval_str(char* s) {
+    lval* v = malloc(sizeof(lval));
+    v->type = LVAL_STR;
+    v->str = malloc(strlen(s) + 1);
+    strcpy(v->str, s);
+    return v;
 }
 
 lval* lval_builtin(lbuiltin func) {
@@ -150,6 +159,7 @@ void lval_del(lval* v) {
         break;
     case LVAL_ERR: free(v->err); break;
     case LVAL_SYM: free(v->sym); break;
+    case LVAL_STR: free(v->str); break;
     case LVAL_QEXPR:
     case LVAL_SEXPR:
       for (int i = 0; i < v->count; i++) {
@@ -192,6 +202,9 @@ lval* lval_copy(lval* v) {
     case LVAL_SYM:
       x->sym = malloc(strlen(v->sym) + 1);
       strcpy(x->sym, v->sym); break;
+
+    case LVAL_STR: x->str = malloc(strlen(v->str) + 1);
+        strcpy(x->str, v->str); break;
     
     /* Copy Lists by copying each sub-expression */
     case LVAL_SEXPR:
@@ -265,6 +278,7 @@ void lval_print(lval* v) {
     case LVAL_NUM:   printf("%li", v->num); break;
     case LVAL_ERR:   printf("Error: %s", v->err); break;
     case LVAL_SYM:   printf("%s", v->sym); break;
+    case LVAL_STR:   lval_print_str(v); break;
     case LVAL_SEXPR: lval_print_expr(v, '(', ')'); break;
     case LVAL_QEXPR: lval_print_expr(v, '{', '}'); break;
   }
@@ -285,6 +299,7 @@ int lval_eq(lval* x, lval* y) {
         /* Compare string values */
         case LVAL_ERR:  return (strcmp(x->err, y->err) == 0);
         case LVAL_SYM:  return (strcmp(x->sym, y->sym) == 0);
+        case LVAL_STR:  return (strcmp(x->str, y->str) == 0);
 
         /* If builtin compare, otherwise compare formals and body */
         case LVAL_FUN:
@@ -316,6 +331,7 @@ char* ltype_name(int t) {
     case LVAL_NUM: return "Number";
     case LVAL_ERR: return "Error";
     case LVAL_SYM: return "Symbol";
+    case LVAL_STR: return "String";
     case LVAL_SEXPR: return "S-Expression";
     case LVAL_QEXPR: return "Q-Expression";
     default: return "Unknown";
